@@ -10,10 +10,16 @@ repositories {
 }
 
 dependencies {
+    //    core-oxm-context-beans-aspects-aop
+    compile(project(":spring-core"))
+    compile(project(":spring-beans"))
+    compile(project(":spring-context"))
+    compile(project(":spring-instrument"))
+    compile(project(":spring-aop"))
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile(project(":spring-context"))
+
 }
 
 test {
