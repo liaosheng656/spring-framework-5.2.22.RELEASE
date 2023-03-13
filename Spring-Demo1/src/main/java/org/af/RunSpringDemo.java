@@ -1,15 +1,14 @@
 package org.af;
 
+import org.af.annotation.MyComponentScan;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 
+//@Configuration
 /**
- * 启动类
- * @author: fanjin
- * @date: 2023/02/17
- *
+ * 手写Sring
  */
-@Configuration
+@MyComponentScan(basePackage = "org.af")
 public class RunSpringDemo {
 
 	public static void main(String[] args) {
