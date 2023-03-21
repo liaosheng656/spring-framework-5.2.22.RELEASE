@@ -53,21 +53,38 @@ final class PostProcessorRegistrationDelegate {
 	}
 
 
+	/**
+	 * 调用 BeanFactoryPostProcessors 后置处理器，完成配置类的扫描和bean定义的注册
+	 *
+	 * @param beanFactory (首次调用-默认)DefaultListableBeanFactory
+	 * @param beanFactoryPostProcessors 预先设置的beanFactoryPostProcessors
+	 */
 	public static void invokeBeanFactoryPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
 
 		// Invoke BeanDefinitionRegistryPostProcessors first, if any.
 		Set<String> processedBeans = new HashSet<>();
 
+		//DefaultListableBeanFactory是它的子类，true
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
+			//遍历bean工厂的后置处理器(这个是默认的DefaultListableBeanFactory后置处理器)，调用它子类的方法
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
+
+				//bean工厂的注册后置处理器
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
+
+					//调用子类增强方法，可以给bean工厂设置值、（解析）处理配置类
+					//判断是否为配置类
+					//含有@Component、@ComponentScan、@Import、@ImportResource注解
+					//类含有@bean注解的方法
+					//含有@Configuration
+					//完成配置类的扫描和bean定义的注册
 					registryProcessor.postProcessBeanDefinitionRegistry(registry);
 					registryProcessors.add(registryProcessor);
 				}
@@ -80,19 +97,31 @@ final class PostProcessorRegistrationDelegate {
 			// uninitialized to let the bean factory post-processors apply to them!
 			// Separate between BeanDefinitionRegistryPostProcessors that implement
 			// PriorityOrdered, Ordered, and the rest.
+
+			/**
+			 *调用实现了BeanDefinitionRegistryPostProcessor自定义的后置器，子类方法
+			 * 顺序是：实现了PriorityOrdered ---> Ordered ---> .the rest（什么都没有实现的）
+			 * @date 2023/3/21
+			 *
+			 */
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
 
+			//内置一个bean工厂的后置处理器（bean定义注册后置处理器）、调用实现了BeanDefinitionRegistryPostProcessor自定义的后置器，子类方法
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
+
+					//注册ppName（internalConfigurationAnnotationProcessor）为一个bean
 					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
 					processedBeans.add(ppName);
 				}
 			}
+			//排序
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
 			registryProcessors.addAll(currentRegistryProcessors);
+			//注册各种注解解析类，解析各种注解及扫描配置类，完成bean定义的注册
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 			currentRegistryProcessors.clear();
 
@@ -106,6 +135,7 @@ final class PostProcessorRegistrationDelegate {
 			}
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
 			registryProcessors.addAll(currentRegistryProcessors);
+			//完成配置类的扫描和bean定义的注册
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 			currentRegistryProcessors.clear();
 
@@ -123,11 +153,15 @@ final class PostProcessorRegistrationDelegate {
 				}
 				sortPostProcessors(currentRegistryProcessors, beanFactory);
 				registryProcessors.addAll(currentRegistryProcessors);
+
+				//完成配置类的扫描和bean定义的注册、注册各种注解解析类，解析各种注解及扫描配置类，完成bean定义的注册
 				invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 				currentRegistryProcessors.clear();
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+
+			//完成配置类的扫描和bean定义的注册、注册各种注解解析类，解析各种注解及扫描配置类，完成bean定义的注册
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
@@ -174,6 +208,7 @@ final class PostProcessorRegistrationDelegate {
 		sortPostProcessors(orderedPostProcessors, beanFactory);
 		invokeBeanFactoryPostProcessors(orderedPostProcessors, beanFactory);
 
+		//只实现了BeanFactoryPostProcessors，没有实现排序接口的
 		// Finally, invoke all other BeanFactoryPostProcessors.
 		List<BeanFactoryPostProcessor> nonOrderedPostProcessors = new ArrayList<>(nonOrderedPostProcessorNames.size());
 		for (String postProcessorName : nonOrderedPostProcessorNames) {
@@ -186,6 +221,11 @@ final class PostProcessorRegistrationDelegate {
 		beanFactory.clearMetadataCache();
 	}
 
+	/**
+	 *注册的bean的后置处理器
+	 * @date 2023/3/21
+	 *
+	 */
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
 
@@ -277,6 +317,7 @@ final class PostProcessorRegistrationDelegate {
 			Collection<? extends BeanDefinitionRegistryPostProcessor> postProcessors, BeanDefinitionRegistry registry) {
 
 		for (BeanDefinitionRegistryPostProcessor postProcessor : postProcessors) {
+			//注册各种注解解析类，解析各种注解及扫描
 			postProcessor.postProcessBeanDefinitionRegistry(registry);
 		}
 	}

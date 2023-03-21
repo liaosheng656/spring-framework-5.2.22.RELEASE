@@ -81,6 +81,8 @@ abstract class ConfigurationClassUtils {
 	 * @param beanDef the bean definition to check
 	 * @param metadataReaderFactory the current factory in use by the caller
 	 * @return whether the candidate qualifies as (any kind of) configuration class
+	 *
+	 * 判断是否为配置类
 	 */
 	public static boolean checkConfigurationClassCandidate(
 			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
@@ -111,6 +113,7 @@ abstract class ConfigurationClassUtils {
 		else {
 			try {
 				MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(className);
+				//获取这个类的注解信息
 				metadata = metadataReader.getAnnotationMetadata();
 			}
 			catch (IOException ex) {
@@ -122,10 +125,16 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
+		//是否包含@Configuration注解
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
+
+		//含有@Configuration(proxyBeanMethod=true) 设置为FULL配置类
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		//含有@Configuration(proxyBeanMethod=false) 和设置为LITE配置类
+		//含有@Component、@ComponentScan、@Import、@ImportResource注解
+		//2、类含有@bean注解的方法
 		else if (config != null || isConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
@@ -143,6 +152,10 @@ abstract class ConfigurationClassUtils {
 	}
 
 	/**
+	 *
+	 * 是否为LITE配置类
+	 * 1、含有@Component、@ComponentScan、@Import、@ImportResource注解
+	 * 2、类含有@bean注解的方法
 	 * Check the given metadata for a configuration class candidate
 	 * (or nested component class declared within a configuration/component class).
 	 * @param metadata the metadata of the annotated class
@@ -155,6 +168,7 @@ abstract class ConfigurationClassUtils {
 			return false;
 		}
 
+		//含有@Component、@ComponentScan、@Import、@ImportResource注解
 		// Any of the typical annotations found?
 		for (String indicator : candidateIndicators) {
 			if (metadata.isAnnotated(indicator)) {
@@ -163,6 +177,7 @@ abstract class ConfigurationClassUtils {
 		}
 
 		// Finally, let's look for @Bean methods...
+		//含有@bean注解的方法
 		return hasBeanMethods(metadata);
 	}
 

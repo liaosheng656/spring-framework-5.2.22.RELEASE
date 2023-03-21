@@ -109,6 +109,7 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 	 * @see #refresh
 	 */
 	public GenericApplicationContext() {
+		//设置功能强大的bean工厂
 		this.beanFactory = new DefaultListableBeanFactory();
 	}
 
@@ -266,6 +267,7 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 			throw new IllegalStateException(
 					"GenericApplicationContext does not support multiple refresh attempts: just call 'refresh' once");
 		}
+		//设置一个序列化的值
 		this.beanFactory.setSerializationId(getId());
 	}
 

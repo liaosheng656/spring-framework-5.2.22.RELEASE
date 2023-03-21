@@ -63,6 +63,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
 	public AnnotationConfigApplicationContext() {
+		//设置注解bean定义读取器，加载内置的后置处理器或解析器，这里会先加载父类构造方法，设置bean工厂
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
@@ -84,7 +85,9 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+		//加载内置的后置处理器或解析器、设置beanFactory为DefaultListableBeanFactory
 		this();
+		//注册componentClasses为bean定义（注册配置类）
 		register(componentClasses);
 		refresh();
 	}

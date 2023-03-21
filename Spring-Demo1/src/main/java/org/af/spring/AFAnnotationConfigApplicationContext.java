@@ -1,5 +1,6 @@
 package org.af.spring;
 
+import org.af.annotation.MyComponent;
 import org.af.annotation.MyComponentScan;
 import org.springframework.util.StringUtils;
 
@@ -15,11 +16,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
+ * @author lhq
+ * @date 2023/3/13
+ *
  */
 public class AFAnnotationConfigApplicationContext {
 
 
-	Map<String , MyBeanDefinition> BeanDefinitionMap = new ConcurrentHashMap<>();
+	Map<String , MyBeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
 
 	public AFAnnotationConfigApplicationContext(Class<?> configClass) throws IOException, ClassNotFoundException {
 
@@ -55,23 +59,73 @@ public class AFAnnotationConfigApplicationContext {
 			this.getClassFilePathList(file,classPathList,basePackage);
 		}
 
+		System.out.println(classPathList);
+
 		MyRootBeanDefinition rootBeanDefinition;
+
 		//封装bean定义
 		for (String classPath : classPathList) {
-			Class<?> aClass = Class.forName(classPath);
 
+			Class<?> aClass = null;
+			try {
+				//这里用的是反射，Spring里面用的ASM技术获取类的信息
+				aClass = Class.forName(classPath);
+			}catch (Exception e){
+
+				e.printStackTrace();
+				continue;
+			}
+
+			MyComponent MyComponent = aClass.getAnnotation(MyComponent.class);
+
+			if(MyComponent == null){
+				continue;
+			}
+
+			if(aClass.isInterface()){
+				continue;
+			}
+
+			String beanName = aClass.getSimpleName();
 			rootBeanDefinition = new MyRootBeanDefinition();
 
-			rootBeanDefinition.setBeanClassName(aClass.getName());
-			rootBeanDefinition.setLazyInit(false);
+			//父类
+			Class<?> superclass = aClass.getSuperclass();
+			if(!superclass.getName().equals(Object.class.getName())){
+
+				rootBeanDefinition.setBeanClassName(superclass.getName());
+				beanName = superclass.getSimpleName();
+			}
+
+			//父接口
+			Class<?>[] interfaces = aClass.getInterfaces();
+			if(interfaces != null && interfaces.length > 0){
+				for (Class<?> cls : interfaces) {
+					rootBeanDefinition.setBeanClassName(cls.getName());
+					beanName = cls.getSimpleName();
+				}
+			}
+
+			String newBeanName = MyComponent.beanName();
+			if(!StringUtils.isEmpty(newBeanName)){
+				beanName = newBeanName;
+			}
+
+			//首字母小写
+
+			char[] chars = beanName.toCharArray();
+			chars[0] = Character.toLowerCase(chars[0]);
+			beanName = new String(chars);
+//			beanName = beanName.substring(0,1).toLowerCase()+beanName.substring(1);
+			rootBeanDefinition.setLazyInit(MyComponent.lazy());
 			//单例
-			rootBeanDefinition.setScope("singleton");
+			rootBeanDefinition.setScope(MyComponent.scope());
 
 			//bean定义map
-			BeanDefinitionMap.put(aClass.getSimpleName(),rootBeanDefinition);
+			beanDefinitionMap.put(beanName,rootBeanDefinition);
 		}
 
-		//转换成bean定义
+		System.out.println(beanDefinitionMap);
 
 		//初始化前-后置处理器
 
@@ -99,7 +153,7 @@ public class AFAnnotationConfigApplicationContext {
 
 			//如果是文件夹
 			if (childFile.isDirectory()) {
-				getFileNames(childFile, fileNames, basePackage);
+				this.getClassFilePathList(childFile, fileNames, basePackage);
 			} else {
 
 				String pat = childFile.getAbsolutePath();
@@ -112,7 +166,7 @@ public class AFAnnotationConfigApplicationContext {
 				String path = childFile.getAbsolutePath().replace("\\",".");
 
 				//类路径
-				String classPath = path.substring(path.indexOf(basePackage));
+				String classPath = path.substring(path.indexOf(basePackage),path.lastIndexOf(".class"));
 				//
 				fileNames.add(classPath);
 		}
