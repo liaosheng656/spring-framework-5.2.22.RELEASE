@@ -553,12 +553,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				//初始化消息源
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				//初始化多播器，多播器回调
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				//开放接口，SpringBoot在这里创建了内置的Tomcat
 				onRefresh();
 
 				// Check for listener beans and register them.

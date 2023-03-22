@@ -127,6 +127,12 @@ public class AFAnnotationConfigApplicationContext {
 
 		System.out.println(beanDefinitionMap);
 
+		//实例化之前
+
+		//实例化
+
+		//实例化之后
+
 		//初始化前-后置处理器
 
 		//初始化
