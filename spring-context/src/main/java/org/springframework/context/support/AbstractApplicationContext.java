@@ -546,6 +546,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Register bean processors that intercept bean creation.
 				/**
 				 *
+				 * 加bean的后置处理器加入到beanFactory的BeanPostProcessors属性中
 				 * @date 2023/3/21
 				 *
 				 */
@@ -756,7 +757,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
-	 *实例化并注册所有BeanPostProcessor beans
+	 *加bean的后置处理器加入到beanFactory的BeanPostProcessors属性中
 	 * 而且按一定的顺序
 	 * 必须在任何应用程序beans实例化之前调用
 	 * @date 2023/3/21
@@ -767,7 +768,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void registerBeanPostProcessors(ConfigurableListableBeanFactory beanFactory) {
 
-		//注册所有的BeanPostProcessor的bean
+		//加bean的后置处理器加入到beanFactory的BeanPostProcessors属性中
 		PostProcessorRegistrationDelegate.registerBeanPostProcessors(beanFactory, this);
 	}
 

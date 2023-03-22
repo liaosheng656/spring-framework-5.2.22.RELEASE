@@ -222,13 +222,14 @@ final class PostProcessorRegistrationDelegate {
 	}
 
 	/**
-	 *注册的bean的后置处理器
+	 *加bean的后置处理器加入到beanFactory的BeanPostProcessors属性中
 	 * @date 2023/3/21
-	 *
+	 * @param beanFactory 默认DefaultListableBeanFactory
 	 */
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
 
+		//后置处理器的名称
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 		// Register BeanPostProcessorChecker that logs an info message when
@@ -243,7 +244,11 @@ final class PostProcessorRegistrationDelegate {
 		List<BeanPostProcessor> internalPostProcessors = new ArrayList<>();
 		List<String> orderedPostProcessorNames = new ArrayList<>();
 		List<String> nonOrderedPostProcessorNames = new ArrayList<>();
+
+		//遍历
 		for (String ppName : postProcessorNames) {
+
+			//实现了PriorityOrdered接口
 			if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
 				BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
 				priorityOrderedPostProcessors.add(pp);
@@ -251,16 +256,22 @@ final class PostProcessorRegistrationDelegate {
 					internalPostProcessors.add(pp);
 				}
 			}
+
+			//实现了Ordered接口
 			else if (beanFactory.isTypeMatch(ppName, Ordered.class)) {
 				orderedPostProcessorNames.add(ppName);
 			}
 			else {
+				//没有实现任何排序接口的
 				nonOrderedPostProcessorNames.add(ppName);
 			}
 		}
 
 		// First, register the BeanPostProcessors that implement PriorityOrdered.
+		//排序
 		sortPostProcessors(priorityOrderedPostProcessors, beanFactory);
+
+		//将实现了PriorityOrdered接口的BeanPostProcessors加入beanFactory对应的BeanPostProcessors属性中
 		registerBeanPostProcessors(beanFactory, priorityOrderedPostProcessors);
 
 		// Next, register the BeanPostProcessors that implement Ordered.
@@ -273,6 +284,8 @@ final class PostProcessorRegistrationDelegate {
 			}
 		}
 		sortPostProcessors(orderedPostProcessors, beanFactory);
+
+		//将实现了Ordered接口的BeanPostProcessors加入beanFactory对应的BeanPostProcessors属性中
 		registerBeanPostProcessors(beanFactory, orderedPostProcessors);
 
 		// Now, register all regular BeanPostProcessors.
@@ -284,10 +297,14 @@ final class PostProcessorRegistrationDelegate {
 				internalPostProcessors.add(pp);
 			}
 		}
+
+		//将没有实现任何排序接口的BeanPostProcessors加入beanFactory对应的BeanPostProcessors属性中
 		registerBeanPostProcessors(beanFactory, nonOrderedPostProcessors);
 
 		// Finally, re-register all internal BeanPostProcessors.
 		sortPostProcessors(internalPostProcessors, beanFactory);
+
+		//将internalPostProcessors加入beanFactory对应的BeanPostProcessors属性中
 		registerBeanPostProcessors(beanFactory, internalPostProcessors);
 
 		// Re-register post-processor for detecting inner beans as ApplicationListeners,

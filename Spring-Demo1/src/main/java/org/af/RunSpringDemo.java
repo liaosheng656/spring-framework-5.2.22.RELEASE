@@ -24,7 +24,7 @@ public class RunSpringDemo {
 //		context.getBean()
 
 //		AFAnnotationConfigApplicationContext context = new AFAnnotationConfigApplicationContext(RunSpringDemo.class);
-		System.out.println("执行完了-----");
+		System.out.println("执行完了-----2222");
 
 	}
 
