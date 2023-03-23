@@ -326,12 +326,18 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
+
+						//判断是否存在循环依赖
 						if (isDependent(beanName, dep)) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
+
+						//	 *设置依赖dependentBeanMap
+						//	 * 设置dependenciesForBeanMap
 						registerDependentBean(dep, beanName);
 						try {
+							//创建bean
 							getBean(dep);
 						}
 						catch (NoSuchBeanDefinitionException ex) {
@@ -342,6 +348,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 
 				// Create bean instance.
+
+				//单例则创建bean
 				if (mbd.isSingleton()) {
 					//函数式接口
 					sharedInstance = getSingleton(beanName, () -> {
@@ -359,11 +367,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 
+				//如果是多例bean
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
+						//原型bean创建之前，设置属性说明这个原型bean已经创建
 						beforePrototypeCreation(beanName);
+						//
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {
@@ -1145,6 +1156,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 *原型bean创建之前，设置属性说明这个原型bean已经创建
+	 * @date 2023/3/23
+	 *
 	 * Callback before prototype creation.
 	 * <p>The default implementation register the prototype as currently in creation.
 	 * @param beanName the name of the prototype about to be created
@@ -1498,6 +1512,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 *解析bean类
+	 * @date 2023/3/23
+	 *
 	 * Resolve the bean class for the specified bean definition,
 	 * resolving a bean class name into a Class reference (if necessary)
 	 * and storing the resolved Class in the bean definition for further use.

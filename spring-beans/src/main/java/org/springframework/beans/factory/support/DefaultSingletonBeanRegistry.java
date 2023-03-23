@@ -405,23 +405,37 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
+	 *设置依赖dependentBeanMap
+	 * 设置dependenciesForBeanMap
+	 * @date 2023/3/23
+	 *
 	 * Register a dependent bean for the given bean,
 	 * to be destroyed before the given bean is destroyed.
 	 * @param beanName the name of the bean
 	 * @param dependentBeanName the name of the dependent bean
 	 */
 	public void registerDependentBean(String beanName, String dependentBeanName) {
+
+		//获取bean名称或别名
 		String canonicalName = canonicalName(beanName);
 
 		synchronized (this.dependentBeanMap) {
+
+			//所有依赖beanName的bean
+
+			//相当于往dependentBeanMap的value集合加入dependentBeanName
 			Set<String> dependentBeans =
 					this.dependentBeanMap.computeIfAbsent(canonicalName, k -> new LinkedHashSet<>(8));
+
+			//如果添加失败，说明dependentBeanName--->依赖beanName，这时又构成循环依赖了，所以直接返回
 			if (!dependentBeans.add(dependentBeanName)) {
 				return;
 			}
 		}
 
 		synchronized (this.dependenciesForBeanMap) {
+
+			//相当于往dependenciesForBeanMap的value集合加入canonicalName
 			Set<String> dependenciesForBean =
 					this.dependenciesForBeanMap.computeIfAbsent(dependentBeanName, k -> new LinkedHashSet<>(8));
 			dependenciesForBean.add(canonicalName);
@@ -431,8 +445,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	/**
 	 * Determine whether the specified dependent bean has been registered as
 	 * dependent on the given bean or on any of its transitive dependencies.
-	 * @param beanName the name of the bean to check
-	 * @param dependentBeanName the name of the dependent bean
+	 * @param beanName the name of the bean to check  自己
+	 * @param dependentBeanName the name of the dependent bean 依赖的bean
 	 * @since 4.0
 	 */
 	protected boolean isDependent(String beanName, String dependentBeanName) {
@@ -441,15 +455,30 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 	}
 
+
+	/**
+	 *beanName--->依赖dependentBeanName
+	 * @date 2023/3/23
+	 * @param beanName the name of the bean to check  自己
+	 * @param dependentBeanName the name of the dependent bean 依赖的bean
+	 * @since 4.0
+	 */
 	private boolean isDependent(String beanName, String dependentBeanName, @Nullable Set<String> alreadySeen) {
+
+		//alreadySeen不为空，并且包含beanName，说明已经校验过了，没有存在循环依赖，返回false
 		if (alreadySeen != null && alreadySeen.contains(beanName)) {
 			return false;
 		}
+
+		//自己A
 		String canonicalName = canonicalName(beanName);
+		//依赖A的bean，即dependentBeans--->依赖A
 		Set<String> dependentBeans = this.dependentBeanMap.get(canonicalName);
 		if (dependentBeans == null) {
 			return false;
 		}
+
+		//即dependentBeans包含dependentBeanName，说明dependentBeanName--->也依赖beanName，循环依赖
 		if (dependentBeans.contains(dependentBeanName)) {
 			return true;
 		}
@@ -457,7 +486,10 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 			if (alreadySeen == null) {
 				alreadySeen = new HashSet<>();
 			}
+			//已经比较过了，放入集合中
 			alreadySeen.add(beanName);
+
+			//递归
 			if (isDependent(transitiveDependency, dependentBeanName, alreadySeen)) {
 				return true;
 			}
